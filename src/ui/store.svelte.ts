@@ -4,12 +4,25 @@
 
 import { defaultHouse } from '../engine/scenarios';
 import { compute } from '../engine/compute';
+import { flowAtHead } from '../engine/pump';
+import {
+  prechargeDefault,
+  tankPerformance,
+  requiredTankVolume,
+  type TankPerformance,
+  type TankRequirement,
+} from '../engine/tank';
 import { FIXTURE_PRESETS, PIPE_PRESETS } from '../engine/presets';
 import type { ComputeResult, Formula, Graph, GraphNode, Mode } from '../engine/types';
 
+/** Верхня вкладка: два режими тиску + гілка гідробака. */
+export type Tab = 'forward' | 'reverse' | 'tank';
+
+const M_PER_BAR = 10.2;
+
 class AppStore {
   graph = $state<Graph>(defaultHouse(0.25));
-  mode = $state<Mode>('forward');
+  tab = $state<Tab>('forward');
   activeTapId = $state('tap');
   flowLmin = $state(10);
   /** Паспортні числа станції з коробки (§ крива насоса). */
@@ -18,6 +31,20 @@ class AppStore {
   targetBar = $state(1.5);
   fixtureKey = $state<string>('custom');
   formula = $state<Formula>('hw');
+
+  // --- гідробак (Етап 2.6) ---
+  tankMode = $state<'have' | 'need'>('have');
+  tankVolumeL = $state(24);
+  cutIn = $state(1.5);
+  cutOut = $state(3.0);
+  prechargeAuto = $state(true);
+  prechargeManual = $state(1.36);
+  targetStartsPerHour = $state(20);
+
+  /** Режим тиску для рушія (гілка бака не рахує тиск). */
+  get mode(): Mode {
+    return this.tab === 'reverse' ? 'reverse' : 'forward';
+  }
 
   result = $derived<ComputeResult>(
     compute({
@@ -30,6 +57,25 @@ class AppStore {
       targetBar: this.targetBar,
       formula: this.formula,
     }),
+  );
+
+  precharge = $derived(this.prechargeAuto ? prechargeDefault(this.cutIn) : this.prechargeManual);
+
+  /** Подача насоса в бак = витрата з кривої при тиску вимкнення реле. */
+  pumpFlowIntoTank = $derived(flowAtHead(this.cutOut * M_PER_BAR, this.pumpMaxHead, this.pumpMaxFlow));
+
+  tankPerf = $derived<TankPerformance>(
+    tankPerformance(this.tankVolumeL, this.cutIn, this.cutOut, this.precharge, this.pumpFlowIntoTank),
+  );
+
+  tankReq = $derived<TankRequirement>(
+    requiredTankVolume(
+      this.targetStartsPerHour,
+      this.cutIn,
+      this.cutOut,
+      this.precharge,
+      this.pumpFlowIntoTank,
+    ),
   );
 
   get source(): GraphNode {

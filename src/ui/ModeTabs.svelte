@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { store } from './store.svelte';
-  import type { Mode } from '../engine/types';
+  import { store, type Tab } from './store.svelte';
 
-  const tabs: { mode: Mode; label: string }[] = [
-    { mode: 'forward', label: 'Який тиск я отримаю' },
-    { mode: 'reverse', label: 'Який насос потрібен' },
+  const tabs: { tab: Tab; label: string }[] = [
+    { tab: 'forward', label: 'Який тиск я отримаю' },
+    { tab: 'reverse', label: 'Який насос потрібен' },
+    { tab: 'tank', label: 'Гідробак' },
   ];
 </script>
 
 <div class="tabs" role="tablist">
-  {#each tabs as t (t.mode)}
+  {#each tabs as t (t.tab)}
     <button
       class="tab"
       role="tab"
-      aria-selected={store.mode === t.mode}
-      onclick={() => (store.mode = t.mode)}
+      aria-selected={store.tab === t.tab}
+      onclick={() => (store.tab = t.tab)}
     >
       {t.label}
     </button>
@@ -31,6 +31,8 @@
     border-radius: var(--radius);
     padding: 4px;
     width: fit-content;
+    max-width: 100%;
+    flex-wrap: wrap;
   }
   .tab {
     font: inherit;

@@ -1,8 +1,11 @@
 <script lang="ts">
+  import { store } from './ui/store.svelte';
   import ModeTabs from './ui/ModeTabs.svelte';
   import InputsCard from './ui/InputsCard.svelte';
   import SegmentsCard from './ui/SegmentsCard.svelte';
   import ResultPanel from './ui/ResultPanel.svelte';
+  import TankCard from './ui/TankCard.svelte';
+  import TankResult from './ui/TankResult.svelte';
 </script>
 
 <div class="wrap">
@@ -20,11 +23,18 @@
   <ModeTabs />
 
   <div class="grid">
-    <div>
-      <InputsCard />
-      <SegmentsCard />
-    </div>
-    <ResultPanel />
+    {#if store.tab === 'tank'}
+      <div>
+        <TankCard />
+      </div>
+      <TankResult />
+    {:else}
+      <div>
+        <InputsCard />
+        <SegmentsCard />
+      </div>
+      <ResultPanel />
+    {/if}
   </div>
 
   <p class="foot">

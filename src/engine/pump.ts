@@ -13,3 +13,14 @@ export function pumpHeadAtFlow(qLmin: number, maxHead: number, maxFlow: number):
   const ratio = qLmin / maxFlow;
   return Math.max(0, maxHead * (1 - ratio * ratio));
 }
+
+/**
+ * Обернена задача: витрата, яку насос дає при заданому напорі, л/хв.
+ * Q = Q_max · √(1 − H/H_max). Якщо напір недосяжний (H ≥ H_max) → 0
+ * (насос не подужає такий тиск).
+ */
+export function flowAtHead(headM: number, maxHead: number, maxFlow: number): number {
+  if (maxHead <= 0 || maxFlow <= 0) return 0;
+  const inside = 1 - headM / maxHead;
+  return inside > 0 ? maxFlow * Math.sqrt(inside) : 0;
+}
