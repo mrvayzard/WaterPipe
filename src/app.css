@@ -1,8 +1,21 @@
 :root {
   --paper: #f4f2ec;
+  --card: #fbfaf6;
   --ink: #1b2a2e;
   --ink-soft: #5a6a6d;
-  font-family: system-ui, "Segoe UI", sans-serif;
+  --line: #dedacf;
+  --line-strong: #c9c4b4;
+  --teal: #0f6e56;
+  --teal-bg: #e1f0ea;
+  --amber: #b0700e;
+  --amber-bg: #f7ead3;
+  --red: #a32d2d;
+  --red-bg: #f6e3e1;
+  --blue: #185fa5;
+  --blue-bg: #e4eef8;
+  --radius: 10px;
+
+  font-family: "Space Grotesk", system-ui, "Segoe UI", sans-serif;
   color: var(--ink);
   background: var(--paper);
 }
@@ -15,5 +28,27 @@
 
 body {
   min-height: 100vh;
+  line-height: 1.5;
+  padding: 24px 16px 64px;
   -webkit-font-smoothing: antialiased;
+}
+
+input[type="number"],
+select {
+  width: 100%;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+  padding: 9px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: -1px;
+  border-color: var(--blue);
 }
