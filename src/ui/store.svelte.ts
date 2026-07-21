@@ -12,7 +12,12 @@ import {
   type TankPerformance,
   type TankRequirement,
 } from '../engine/tank';
-import { FIXTURE_PRESETS, PIPE_PRESETS } from '../engine/presets';
+import {
+  FIXTURE_PRESETS,
+  PIPE_PRESETS,
+  PRESSURE_SWITCH_PRESETS,
+  COMFORT_TAP_BAR,
+} from '../engine/presets';
 import type { ComputeResult, Formula, Graph, GraphNode, Mode } from '../engine/types';
 
 /** Верхня вкладка: два режими тиску + гілка гідробака. */
@@ -88,12 +93,27 @@ class AppStore {
     ),
   );
 
+  /** Рекомендоване увімкнення: комфорт на верхньому крані + його висота. */
+  recommendedCutIn = $derived(COMFORT_TAP_BAR + this.tap.z / M_PER_BAR);
+
+  /** Стеля тиску вимкнення: скільки станція тисне в бак з поточної глибини. */
+  maxTankBar = $derived((this.pumpMaxHead - (this.source.depthToWater ?? 0)) / M_PER_BAR);
+
   get source(): GraphNode {
     return this.graph.nodes.find((n) => n.id === 'src')!;
   }
 
   get tap(): GraphNode {
     return this.graph.nodes.find((n) => n.id === this.activeTapId)!;
+  }
+
+  /** Пресет реле тиску підставляє увімкнення й вимкнення. */
+  applyPressureSwitch(key: string): void {
+    const p = PRESSURE_SWITCH_PRESETS[key];
+    if (p) {
+      this.cutIn = p.cutIn;
+      this.cutOut = p.cutOut;
+    }
   }
 
   /** Пресет приладу підставляє і бажаний тиск, і типову витрату (§4.1). */

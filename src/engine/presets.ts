@@ -49,3 +49,19 @@ export const FIXTURE_PRESETS: Record<string, FixturePreset> = {
   washer: { label: 'Пральна / посудомийна', bar: 1.0, flowLmin: 10 },
   garden: { label: 'Полив / шланг', bar: 2.0, flowLmin: 15 },
 };
+
+export interface PressureSwitchPreset {
+  label: string;
+  cutIn: number;
+  cutOut: number;
+}
+
+/** Стандартні налаштування реле тиску (диференціал ~1.3–1.5 бар). */
+export const PRESSURE_SWITCH_PRESETS: Record<string, PressureSwitchPreset> = {
+  soft: { label: "М'який — 1.4 / 2.8 бар", cutIn: 1.4, cutOut: 2.8 },
+  standard: { label: 'Стандарт — 1.5 / 3.0 бар', cutIn: 1.5, cutOut: 3.0 },
+  strong: { label: 'Сильніший — 2.0 / 3.5 бар', cutIn: 2.0, cutOut: 3.5 },
+};
+
+/** Комфортний тиск на найвищому крані для рекомендації увімкнення, бар. */
+export const COMFORT_TAP_BAR = 1.5;

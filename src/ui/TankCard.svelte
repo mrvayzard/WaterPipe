@@ -1,9 +1,9 @@
 <script lang="ts">
   import { store } from './store.svelte';
+  import { PRESSURE_SWITCH_PRESETS } from '../engine/presets';
 
-  const M_PER_BAR = 10.2;
   const depth = $derived(store.source.depthToWater ?? 0);
-  const maxTankBar = $derived((store.pumpMaxHead - depth) / M_PER_BAR);
+  const switches = Object.entries(PRESSURE_SWITCH_PRESETS);
 </script>
 
 <div class="card">
@@ -22,6 +22,16 @@
     </button>
   </div>
 
+  <div class="field">
+    <label for="switch">Готові налаштування реле <span class="hint">якщо не знаєш, з чого почати</span></label>
+    <select id="switch" onchange={(e) => store.applyPressureSwitch(e.currentTarget.value)}>
+      <option value="">— обери пресет —</option>
+      {#each switches as [key, p] (key)}
+        <option value={key}>{p.label}</option>
+      {/each}
+    </select>
+  </div>
+
   <div class="row2">
     <div class="field">
       <label for="cutin">Реле: увімкнення <span class="hint">бар</span></label>
@@ -32,6 +42,12 @@
       <input id="cutout" type="number" min="0" step="0.1" bind:value={store.cutOut} />
     </div>
   </div>
+
+  <p class="guide">
+    Для крана на {store.tap.z} м увімкнення варто ставити ≥ <b>{store.recommendedCutIn.toFixed(1)} бар</b>
+    (щоб і перед пуском був робочий тиск). Вимкнення — на 1–1.5 бар вище, але не більше ≈
+    <b>{store.maxTankBar.toFixed(1)} бар</b> (стільки станція тисне в бак з {depth} м).
+  </p>
 
   <div class="field">
     <label class="check">
@@ -45,19 +61,19 @@
 
   {#if store.tankMode === 'have'}
     <div class="field">
-      <label for="vol">Об'єм бака <span class="hint">л</span></label>
+      <label for="vol">Об'єм бака <span class="hint">л · типово 24, 50, 80, 100</span></label>
       <input id="vol" type="number" min="1" step="1" bind:value={store.tankVolumeL} />
     </div>
   {:else}
     <div class="field">
-      <label for="starts">Не частіше <span class="hint">пусків/год</span></label>
+      <label for="starts">Не частіше <span class="hint">пусків/год · 15–30 норма, менше = насос живе довше</span></label>
       <input id="starts" type="number" min="1" step="1" bind:value={store.targetStartsPerHour} />
     </div>
   {/if}
 
   <p class="pump-note">
     Подача насоса в бак ≈ {store.pumpFlowIntoTank.toFixed(0)} л/хв
-    <span class="hint">(з підйомом з {depth} м станція тисне в бак до ≈ {maxTankBar.toFixed(1)} бар)</span>
+    <span class="hint">(з підйомом з {depth} м станція тисне в бак до ≈ {store.maxTankBar.toFixed(1)} бар)</span>
   </p>
 </div>
 
@@ -134,6 +150,19 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+  }
+  .guide {
+    font-size: 12px;
+    color: var(--ink-soft);
+    background: var(--blue-bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .guide b {
+    color: var(--ink);
+    font-weight: 600;
   }
   .pump-note {
     font-size: 12px;
