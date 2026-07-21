@@ -2,7 +2,8 @@
   import { store } from './store.svelte';
 
   const M_PER_BAR = 10.2;
-  const pumpMaxBar = $derived(store.pumpMaxHead / M_PER_BAR);
+  const depth = $derived(store.source.depthToWater ?? 0);
+  const maxTankBar = $derived((store.pumpMaxHead - depth) / M_PER_BAR);
 </script>
 
 <div class="card">
@@ -56,7 +57,7 @@
 
   <p class="pump-note">
     Подача насоса в бак ≈ {store.pumpFlowIntoTank.toFixed(0)} л/хв
-    <span class="hint">(станція {store.pumpMaxHead} м / {Math.round(store.pumpMaxFlow * 60)} л/год, тобто до ≈ {pumpMaxBar.toFixed(1)} бар)</span>
+    <span class="hint">(з підйомом з {depth} м станція тисне в бак до ≈ {maxTankBar.toFixed(1)} бар)</span>
   </p>
 </div>
 

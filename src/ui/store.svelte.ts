@@ -61,8 +61,18 @@ class AppStore {
 
   precharge = $derived(this.prechargeAuto ? prechargeDefault(this.cutIn) : this.prechargeManual);
 
-  /** Подача насоса в бак = витрата з кривої при тиску вимкнення реле. */
-  pumpFlowIntoTank = $derived(flowAtHead(this.cutOut * M_PER_BAR, this.pumpMaxHead, this.pumpMaxFlow));
+  /**
+   * Подача насоса в бак = витрата з кривої при напорі, який насос долає під час
+   * наповнення: тиск вимкнення + підйом води з глибини. Тертя у фідері поки
+   * знехтуване (малий член при цих витратах). Для «бак+бустер» глибина = 0.
+   */
+  pumpFlowIntoTank = $derived(
+    flowAtHead(
+      this.cutOut * M_PER_BAR + (this.source.depthToWater ?? 0),
+      this.pumpMaxHead,
+      this.pumpMaxFlow,
+    ),
+  );
 
   tankPerf = $derived<TankPerformance>(
     tankPerformance(this.tankVolumeL, this.cutIn, this.cutOut, this.precharge, this.pumpFlowIntoTank),

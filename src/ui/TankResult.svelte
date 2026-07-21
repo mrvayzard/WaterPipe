@@ -6,6 +6,8 @@
 
   const perf = $derived(store.tankPerf);
   const req = $derived(store.tankReq);
+  const depth = $derived(store.source.depthToWater ?? 0);
+  const maxTankBar = $derived((store.pumpMaxHead - depth) / M_PER_BAR);
   const stationTooWeak = $derived(store.pumpFlowIntoTank <= 0);
   const cutoutInvalid = $derived(store.cutOut <= store.cutIn);
 
@@ -66,8 +68,8 @@
     <div class="warn">Тиск вимкнення має бути вищим за тиск увімкнення.</div>
   {:else if stationTooWeak}
     <div class="warn">
-      Станція не дотягує до тиску вимкнення {store.cutOut} бар (макс ≈
-      {(store.pumpMaxHead / M_PER_BAR).toFixed(1)} бар) — реле не вимкнеться, бак не допоможе.
+      Станція не дотягує до тиску вимкнення {store.cutOut} бар: з глибини {depth} м вона тисне в
+      бак максимум ≈ {maxTankBar.toFixed(1)} бар — реле не вимкнеться, бак не допоможе.
     </div>
   {/if}
 
