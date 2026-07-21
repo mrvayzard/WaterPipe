@@ -4,6 +4,9 @@
 
   const r = $derived(store.result);
 
+  const M_PER_BAR = 10.2;
+  const toBar = (m: number): number => m / M_PER_BAR;
+
   const verdictClass: Record<VerdictLevel, string> = {
     good: 'v-good',
     ok: 'v-ok',
@@ -20,42 +23,58 @@
     {@const bar = Math.max(r.pressureBar ?? 0, 0)}
     <div class="gauge">
       <div class="big">{bar.toFixed(2)}<span class="unit"> бар</span></div>
-      <div class="where">тиск у точці розбору</div>
+      <div class="where">тиск у крані</div>
       {#if r.verdict}
         <div class="verdict {verdictClass[r.verdict.level]}">{r.verdict.label}</div>
       {/if}
       <div class="caveat">за кривою насоса, розбір {store.flowLmin} л/хв</div>
     </div>
-  {:else}
-    <div class="gauge">
-      <div class="big">{(r.requiredHead ?? 0).toFixed(0)}<span class="unit"> м</span></div>
-      <div class="where">потрібний напір насоса</div>
-      <div class="verdict v-good">≈ {((r.requiredHead ?? 0) / 10.2).toFixed(1)} бар на виході</div>
-    </div>
-  {/if}
 
-  <div class="node">
-    <span class="dot" style="background:var(--blue)"></span>
-    <span class="lbl">Статичний підйом<small>джерело → кран</small></span>
-    <span class="val">{r.staticLift.toFixed(1)} м</span>
-  </div>
-  <div class="node">
-    <span class="dot" style="background:var(--amber)"></span>
-    <span class="lbl">Втрати на тертя<small>усі труби при {store.flowLmin} л/хв</small></span>
-    <span class="val">{r.frictionTotal.toFixed(1)} м</span>
-  </div>
-  {#if r.mode === 'forward'}
     <div class="node">
       <span class="dot" style="background:var(--teal)"></span>
-      <span class="lbl">Напір насоса<small>у робочій точці, {store.flowLmin} л/хв</small></span>
-      <span class="val">{(r.pumpHead ?? 0).toFixed(1)} м</span>
+      <span class="lbl">Станція створює<small>напір у робочій точці, {store.flowLmin} л/хв</small></span>
+      <span class="val">{toBar(r.pumpHead ?? 0).toFixed(2)} <span class="b">бар</span><small>{(r.pumpHead ?? 0).toFixed(1)} м</small></span>
     </div>
-    {@const bar = r.pressureBar ?? 0}
+    <div class="node">
+      <span class="dot" style="background:var(--blue)"></span>
+      <span class="lbl">− Підйом води до крана<small>джерело → кран</small></span>
+      <span class="val">{toBar(r.staticLift).toFixed(2)} <span class="b">бар</span><small>{r.staticLift.toFixed(1)} м</small></span>
+    </div>
+    <div class="node">
+      <span class="dot" style="background:var(--amber)"></span>
+      <span class="lbl">− Тертя в трубах<small>усі труби при {store.flowLmin} л/хв</small></span>
+      <span class="val">{toBar(r.frictionTotal).toFixed(2)} <span class="b">бар</span><small>{r.frictionTotal.toFixed(1)} м</small></span>
+    </div>
+
+    {@const signed = r.pressureBar ?? 0}
     <div class="bar-track">
       <div
         class="bar-fill"
-        style="width:{Math.max(0, Math.min(100, (bar / 4) * 100))}%;background:{barColor(bar)}"
+        style="width:{Math.max(0, Math.min(100, (signed / 4) * 100))}%;background:{barColor(signed)}"
       ></div>
+    </div>
+  {:else}
+    {@const req = r.requiredHead ?? 0}
+    <div class="gauge">
+      <div class="big">{toBar(req).toFixed(1)}<span class="unit"> бар</span></div>
+      <div class="where">тиск, який має давати станція при {store.flowLmin} л/хв</div>
+      <div class="verdict v-good">≈ {req.toFixed(0)} м напору · бери з запасом</div>
+    </div>
+
+    <div class="node">
+      <span class="dot" style="background:var(--teal)"></span>
+      <span class="lbl">Треба в крані<small>бажаний тиск</small></span>
+      <span class="val">{(r.targetBar ?? 0).toFixed(2)} <span class="b">бар</span></span>
+    </div>
+    <div class="node">
+      <span class="dot" style="background:var(--blue)"></span>
+      <span class="lbl">+ Підйом води до крана<small>джерело → кран</small></span>
+      <span class="val">{toBar(r.staticLift).toFixed(2)} <span class="b">бар</span><small>{r.staticLift.toFixed(1)} м</small></span>
+    </div>
+    <div class="node">
+      <span class="dot" style="background:var(--amber)"></span>
+      <span class="lbl">+ Тертя в трубах<small>усі труби при {store.flowLmin} л/хв</small></span>
+      <span class="val">{toBar(r.frictionTotal).toFixed(2)} <span class="b">бар</span><small>{r.frictionTotal.toFixed(1)} м</small></span>
     </div>
   {/if}
 
@@ -64,10 +83,11 @@
   {/each}
 
   <div class="note">
-    <strong>Втрати по ділянках</strong> (макс. швидкість {r.maxVelocity.toFixed(2)} м/с):<br />
+    <strong>Де саме тертя</strong> (напір, м · макс. швидкість {r.maxVelocity.toFixed(2)} м/с):<br />
     {#each r.segments as s (s.pipeId)}
       {s.label}: {s.hf.toFixed(2)} м<br />
     {/each}
+    <span class="bridge">1 бар ≈ 10.2 м напору</span>
   </div>
 </div>
 
@@ -148,10 +168,21 @@
   }
   .val {
     font-variant-numeric: tabular-nums;
-    font-size: 15px;
-    font-weight: 500;
-    min-width: 66px;
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 76px;
     text-align: right;
+  }
+  .val .b {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--ink-soft);
+  }
+  .val small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--ink-soft);
   }
   .dot {
     width: 9px;
@@ -187,5 +218,11 @@
     margin-top: 16px;
     padding-top: 14px;
     border-top: 1px solid var(--line);
+  }
+  .bridge {
+    display: block;
+    margin-top: 8px;
+    font-style: italic;
+    opacity: 0.8;
   }
 </style>
