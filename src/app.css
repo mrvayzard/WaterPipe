@@ -1,0 +1,19 @@
+:root {
+  --paper: #f4f2ec;
+  --ink: #1b2a2e;
+  --ink-soft: #5a6a6d;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
