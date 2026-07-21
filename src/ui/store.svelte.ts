@@ -12,7 +12,9 @@ class AppStore {
   mode = $state<Mode>('forward');
   activeTapId = $state('tap');
   flowLmin = $state(10);
-  pumpHead = $state(25);
+  /** Паспортні числа станції з коробки (§ крива насоса). */
+  pumpMaxHead = $state(43);
+  pumpMaxFlow = $state(60);
   targetBar = $state(1.5);
   fixtureKey = $state<string>('custom');
   formula = $state<Formula>('hw');
@@ -23,7 +25,8 @@ class AppStore {
       activeTapId: this.activeTapId,
       flowLmin: this.flowLmin,
       mode: this.mode,
-      pumpHead: this.pumpHead,
+      pumpMaxHead: this.pumpMaxHead,
+      pumpMaxFlow: this.pumpMaxFlow,
       targetBar: this.targetBar,
       formula: this.formula,
     }),

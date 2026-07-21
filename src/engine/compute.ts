@@ -11,6 +11,7 @@ import type {
   Warning,
 } from './types';
 import { hazenWilliams, darcyWeisbach, velocity } from './headloss';
+import { pumpHeadAtFlow } from './pump';
 import { findSource, pathToTap } from './graph';
 
 /** 1 бар = 10.2 м напору. */
@@ -87,7 +88,15 @@ export function compute(input: ComputeInput): ComputeResult {
   };
 
   if (mode === 'forward') {
-    const pumpHead = input.pumpHead ?? 0;
+    const maxHead = input.pumpMaxHead ?? 0;
+    const maxFlow = input.pumpMaxFlow ?? 0;
+    const pumpHead = pumpHeadAtFlow(flowLmin, maxHead, maxFlow);
+    if (maxFlow > 0 && flowLmin >= maxFlow) {
+      warnings.push({
+        code: 'over-flow',
+        message: 'Витрата перевищує макс. подачу станції — насос її фізично не забезпечить.',
+      });
+    }
     const pressureBar = (pumpHead - lift - frictionTotal) / BAR_TO_M;
     if (pressureBar < 0) {
       warnings.push({ code: 'negative-pressure', message: 'Води не дійде — тиск у крані відʼємний.' });

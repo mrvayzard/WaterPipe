@@ -24,7 +24,7 @@
       {#if r.verdict}
         <div class="verdict {verdictClass[r.verdict.level]}">{r.verdict.label}</div>
       {/if}
-      <div class="caveat">оцінка при заданій витраті {store.flowLmin} л/хв, не робоча точка</div>
+      <div class="caveat">за кривою насоса, розбір {store.flowLmin} л/хв</div>
     </div>
   {:else}
     <div class="gauge">
@@ -47,8 +47,8 @@
   {#if r.mode === 'forward'}
     <div class="node">
       <span class="dot" style="background:var(--teal)"></span>
-      <span class="lbl">Напір станції<small>що ти задав</small></span>
-      <span class="val">{(r.pumpHead ?? 0).toFixed(0)} м</span>
+      <span class="lbl">Напір насоса<small>у робочій точці, {store.flowLmin} л/хв</small></span>
+      <span class="val">{(r.pumpHead ?? 0).toFixed(1)} м</span>
     </div>
     {@const bar = r.pressureBar ?? 0}
     <div class="bar-track">

@@ -9,6 +9,12 @@
   ];
 
   const fixtures = Object.entries(FIXTURE_PRESETS);
+
+  // Паспортна подача на коробці — у л/год; усередині рушій рахує в л/хв.
+  const maxFlowLh = $derived(Math.round(store.pumpMaxFlow * 60));
+  function setMaxFlowLh(lh: number) {
+    store.pumpMaxFlow = lh / 60;
+  }
 </script>
 
 <div class="card">
@@ -26,37 +32,57 @@
   <div class="row2">
     {#if store.source.sourceType === 'surface_station'}
       <div class="field">
-        <label for="depth">Дзеркало води <span class="hint">м нижче станції</span></label>
+        <label for="depth">Глибина до води <span class="hint">м нижче насоса</span></label>
         <input id="depth" type="number" min="0" step="0.5" bind:value={store.source.depthToWater} />
       </div>
     {/if}
     <div class="field">
-      <label for="taph">Висота точки розбору <span class="hint">м над вводом</span></label>
+      <label for="taph">Кран вище насоса на <span class="hint">м · 2 поверх ≈ 5–7</span></label>
       <input id="taph" type="number" min="0" step="0.5" bind:value={store.tap.z} />
     </div>
   </div>
 
+  <div class="field">
+    <label for="fixture">Що вмикаємо <span class="hint">підставить типову витрату</span></label>
+    <select
+      id="fixture"
+      value={store.fixtureKey}
+      onchange={(e) => store.applyFixture(e.currentTarget.value)}
+    >
+      {#each fixtures as [key, f] (key)}
+        <option value={key}>{f.label} — {f.flowLmin} л/хв</option>
+      {/each}
+      <option value="custom">Свій варіант</option>
+    </select>
+  </div>
+
   {#if store.mode === 'forward'}
-    <div class="row2">
-      <div class="field">
-        <label for="flow">Витрата <span class="hint">л/хв</span></label>
-        <input id="flow" type="number" min="1" step="1" bind:value={store.flowLmin} />
+    <div class="field">
+      <label for="flow">Витрата розбору <span class="hint">л/хв</span></label>
+      <input id="flow" type="number" min="1" step="1" bind:value={store.flowLmin} />
+    </div>
+    <div class="pump-block">
+      <div class="block-title">Станція — два числа з коробки</div>
+      <div class="row2">
+        <div class="field">
+          <label for="pmax">Макс. напір <span class="hint">м · «висота підйому»</span></label>
+          <input id="pmax" type="number" min="0" step="1" bind:value={store.pumpMaxHead} />
+        </div>
+        <div class="field">
+          <label for="qmax">Макс. подача <span class="hint">л/год</span></label>
+          <input
+            id="qmax"
+            type="number"
+            min="0"
+            step="100"
+            value={maxFlowLh}
+            oninput={(e) => setMaxFlowLh(+e.currentTarget.value)}
+          />
+        </div>
       </div>
-      <div class="field">
-        <label for="pump">Напір станції <span class="hint">м, у робочій точці</span></label>
-        <input id="pump" type="number" min="0" step="1" bind:value={store.pumpHead} />
-      </div>
+      <p class="pump-note">Робочу точку на кривій рушій знайде сам — «напір у робочій точці» вводити не треба.</p>
     </div>
   {:else}
-    <div class="field">
-      <label for="fixture">Прилад</label>
-      <select id="fixture" value={store.fixtureKey} onchange={(e) => store.applyFixture(e.currentTarget.value)}>
-        {#each fixtures as [key, f] (key)}
-          <option value={key}>{f.label} — {f.bar} бар, {f.flowLmin} л/хв</option>
-        {/each}
-        <option value="custom">Свій варіант</option>
-      </select>
-    </div>
     <div class="row2">
       <div class="field">
         <label for="target">Бажаний тиск <span class="hint">бар</span></label>
@@ -89,9 +115,6 @@
   .field {
     margin-bottom: 16px;
   }
-  .field:last-child {
-    margin-bottom: 0;
-  }
   label {
     display: block;
     font-size: 13px;
@@ -106,5 +129,25 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
+  }
+  .pump-block {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+    background: #fff;
+  }
+  .block-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .pump-block .field:last-child {
+    margin-bottom: 0;
+  }
+  .pump-note {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 4px;
   }
 </style>

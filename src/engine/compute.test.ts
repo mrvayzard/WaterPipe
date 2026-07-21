@@ -9,7 +9,8 @@ const forward = (over: Partial<ComputeInput> = {}): ComputeInput => ({
   activeTapId: 'tap',
   flowLmin: 10,
   mode: 'forward',
-  pumpHead: 25,
+  pumpMaxHead: 43,
+  pumpMaxFlow: 60,
   ...over,
 });
 
@@ -24,12 +25,16 @@ describe('golden §8: дефолтний будинок, прямий режим
     expect(r.frictionTotal).toBeCloseTo(1.8, 2);
   });
 
-  it('тиск у крані ≈ 1.00 бар', () => {
-    expect(r.pressureBar).toBeCloseTo(1.0, 2);
+  it('напір насоса в робочій точці 43/60 при 10 л/хв ≈ 41.8 м', () => {
+    expect(r.pumpHead).toBeCloseTo(41.806, 2);
   });
 
-  it('вердикт — слабкий напір', () => {
-    expect(r.verdict?.level).toBe('weak');
+  it('тиск у крані ≈ 2.65 бар', () => {
+    expect(r.pressureBar).toBeCloseTo(2.65, 2);
+  });
+
+  it('вердикт — комфортний напір', () => {
+    expect(r.verdict?.level).toBe('good');
   });
 
   it('шлях містить 4 ділянки, домінує стояк', () => {
@@ -46,14 +51,19 @@ describe('golden §8: дефолтний будинок, прямий режим
 
 describe('зворотний режим', () => {
   it('потрібний напір = target·10.2 + підйом + тертя', () => {
-    const r = compute(forward({ mode: 'reverse', targetBar: 1.5, pumpHead: undefined }));
+    const r = compute(forward({ mode: 'reverse', targetBar: 1.5 }));
     expect(r.requiredHead).toBeCloseTo(1.5 * BAR_TO_M + r.staticLift + r.frictionTotal, 5);
   });
 
-  it('прямий і зворотний узгоджені: напір, потрібний під тиск, дає той самий тиск', () => {
-    const rev = compute(forward({ mode: 'reverse', targetBar: 2.0, pumpHead: undefined }));
-    const fwd = compute(forward({ pumpHead: rev.requiredHead }));
-    expect(fwd.pressureBar).toBeCloseTo(2.0, 6);
+  it('прямий і зворотний узгоджені: насос із напором під потрібну точку дає той самий тиск', () => {
+    const targetBar = 2.0;
+    const rev = compute(forward({ mode: 'reverse', targetBar }));
+    // Підбираємо паспортні числа так, щоб крива дала requiredHead саме при 10 л/хв.
+    const maxFlow = 60;
+    const factor = 1 - (10 / maxFlow) ** 2;
+    const maxHead = rev.requiredHead! / factor;
+    const fwd = compute(forward({ pumpMaxHead: maxHead, pumpMaxFlow: maxFlow }));
+    expect(fwd.pressureBar).toBeCloseTo(targetBar, 6);
   });
 });
 
@@ -75,10 +85,16 @@ describe('попередження (§3.4)', () => {
     expect(r.staticLift).toBe(7);
   });
 
-  it('замалий напір → відʼємний тиск і попередження', () => {
-    const r = compute(forward({ pumpHead: 10 }));
+  it('заслабка станція → відʼємний тиск і попередження', () => {
+    const r = compute(forward({ pumpMaxHead: 10, pumpMaxFlow: 60 }));
     expect(r.pressureBar!).toBeLessThan(0);
     expect(r.warnings.some((w) => w.code === 'negative-pressure')).toBe(true);
+  });
+
+  it('витрата понад макс. подачу станції → попередження over-flow', () => {
+    const r = compute(forward({ flowLmin: 70, pumpMaxFlow: 60 }));
+    expect(r.pumpHead).toBe(0);
+    expect(r.warnings.some((w) => w.code === 'over-flow')).toBe(true);
   });
 
   it('висока швидкість (тонка труба, велика витрата) → попередження', () => {

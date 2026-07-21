@@ -57,8 +57,10 @@ export interface ComputeInput {
   /** Витрата розбору, л/хв. */
   flowLmin: number;
   mode: Mode;
-  /** Прямий режим: напір насоса в робочій точці, м. */
-  pumpHead?: number;
+  /** Прямий режим: макс. напір станції (паспорт, при 0 подачі), м. */
+  pumpMaxHead?: number;
+  /** Прямий режим: макс. подача станції (паспорт, при 0 напорі), л/хв. */
+  pumpMaxFlow?: number;
   /** Зворотний режим: бажаний тиск у крані, бар. */
   targetBar?: number;
   /** Формула тертя. За замовчуванням 'hw' (двигун); 'dw' — оракул. */
@@ -74,7 +76,12 @@ export interface Verdict {
   label: string;
 }
 
-export type WarningCode = 'suction' | 'negative-pressure' | 'high-head' | 'high-velocity';
+export type WarningCode =
+  | 'suction'
+  | 'negative-pressure'
+  | 'high-head'
+  | 'high-velocity'
+  | 'over-flow';
 
 export interface Warning {
   code: WarningCode;
@@ -101,6 +108,7 @@ export interface ComputeResult {
   maxVelocity: number;
   warnings: Warning[];
   // --- прямий режим ---
+  /** Напір насоса в робочій точці (на кривій при заданій витраті), м. */
   pumpHead?: number;
   /** Тиск у крані, бар. Може бути від'ємним (води не дійде). */
   pressureBar?: number;
